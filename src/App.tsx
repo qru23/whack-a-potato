@@ -37,7 +37,7 @@ const POTATO_PENALTY = 20
 const POTATO_TIMER = 2000
 const POTATO_WIDTH = 250
 const POTATO_HEIGHT = 150
-const GAME_TIME = 10
+const GAME_TIME = 60
 
 const RANDOM_POTATOES = [
   Potato1, Potato2, Potato3
@@ -187,11 +187,11 @@ function App() {
 
         if (randomSpawn < 0.5) {
           newPotato.isGlitty = true
-          newPotato.sprite = GlittyGif
+          newPotato.sprite = `${GlittyGif}?t=${Date.now()}`
         }
         else {
           const sprite = RANDOM_POTATOES[Math.floor(Math.random() * RANDOM_POTATOES.length)]
-          newPotato.sprite = sprite
+          newPotato.sprite = `${sprite}?t=${Date.now()}`
         }
 
         setPotatoes((potatoes) => {
@@ -365,7 +365,7 @@ function App() {
                 zIndex: 2,
                 cursor: 'pointer',
               }}
-              src={potato.sprite} 
+              src={`${potato.sprite}`} 
               onClick={() => {
                 hitPotato(potato.id)
               }} 
