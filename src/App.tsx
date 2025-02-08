@@ -14,23 +14,14 @@ import KrazySfx from './assets/sfx/KRAZY.wav'
 import WTFSfx from './assets/sfx/WTF 03.wav'
 import YahManSfx from './assets/sfx/Yah Man 03.wav'
 import YouBitchesSfx from './assets/sfx/You Bitches.wav'
+import HUHSfx from './assets/sfx/HUH.mp3'
 import RantSfx from './assets/sfx/RANT.wav'
 import FarmBG from './assets/farm.webp'
 import Potato1 from './assets/potato1.gif'
 import Potato2 from './assets/potato2.gif'
 import Potato3 from './assets/mrpotatohead.gif'
-
-type Position = {
-  x: number,
-  y: number,
-}
-
-interface Potato {
-  id: number,
-  sprite: string,
-  position: Position,
-  isGlitty: boolean,
-}
+import { Position, Potato } from './types'
+import { CombatText } from './components/CombatText'
 
 const GLITTY_POINTS = 10
 const POTATO_PENALTY = 20
@@ -73,8 +64,8 @@ function App() {
   const [isInGame, setIsInGame] = useState(false)
   const [points, setPoints] = useState<number>(0)
   const [startTime, setStartTime] = useState<number>(0)
-
   const [potatoes, setPotatoes] = useState<Potato[]>([])
+  const [numbers, setNumbers] = useState<{ id: number; position: Position; value: number }[]>([])
 
   const gameEndRantSfxRef = useRef(new Audio(RantSfx))
   const potatoesRef = useRef(potatoes)
@@ -104,14 +95,24 @@ function App() {
     })
 
     let audio: HTMLAudioElement | null = null
+    let pointChange = 0
 
     if (potato.isGlitty) {
       audio = new Audio(HitSFX[Math.floor(Math.random() * HitSFX.length)])
-      setPoints((points) => points + GLITTY_POINTS)
+      pointChange = GLITTY_POINTS
     }
     else {
-      setPoints((points) => points - POTATO_PENALTY)
+      audio = new Audio(HUHSfx)
+      pointChange = -POTATO_PENALTY
     }
+
+    setPoints((points) => points + pointChange)
+
+    const numberPosition = potato.position
+    numberPosition.x += POTATO_WIDTH / 2 - 16
+    numberPosition.y += POTATO_HEIGHT / 2 - 16
+
+    setNumbers(prev => [...prev, { id: Date.now(), position: numberPosition, value: pointChange }])
 
     if (audio) {
       audio.play()
@@ -374,6 +375,52 @@ function App() {
         })
       }
       
+      {
+        numbers.map(num => {
+          return (
+            <CombatText key={num.id} value={num.value} position={num.position} />
+          )
+        })
+      }
+
+      <div
+        className='details'
+        style={{
+          position: 'absolute',
+          zIndex: 5,
+          bottom: 5,
+          left: 5,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <span>@Qru</span>
+        <span>
+          <a
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+            }}
+            href="https://twitch.tv/sunglitters"
+            target='_blank'
+          >
+            ♥ Glitty
+          </a>
+        </span>
+        <span>
+          <a
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+            }}
+            href="https://twitch.tv/ziqoftw"
+            target='_blank'
+          >
+              ZNN Productions
+          </a>
+        </span>
+      </div>
+
       <img
         style={{
           width: '100vw',
