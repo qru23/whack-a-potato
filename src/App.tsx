@@ -98,8 +98,9 @@ function App() {
     let pointChange = 0
 
     if (potato.isGlitty) {
+      const bonusPoints = Math.floor((1 - ((Date.now() - potato.created) / POTATO_TIMER)) * GLITTY_POINTS)
       audio = new Audio(HitSFX[Math.floor(Math.random() * HitSFX.length)])
-      pointChange = GLITTY_POINTS
+      pointChange = GLITTY_POINTS + bonusPoints
     }
     else {
       audio = new Audio(HUHSfx)
@@ -180,10 +181,11 @@ function App() {
         }
 
         const newPotato: Potato = { 
-          id: Math.floor(Math.random() * 10000), 
+          id: Date.now(), 
           sprite: '', 
           position: position,
           isGlitty: false,
+          created: Date.now()
         }
 
         if (randomSpawn < 0.5) {

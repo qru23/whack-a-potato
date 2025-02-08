@@ -8,4 +8,5 @@ export interface Potato {
   sprite: string,
   position: Position,
   isGlitty: boolean,
+  created: number,
 }
