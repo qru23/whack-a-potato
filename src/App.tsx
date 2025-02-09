@@ -28,7 +28,7 @@ const POTATO_PENALTY = 20
 const POTATO_TIMER = 2000
 const POTATO_WIDTH = 250
 const POTATO_HEIGHT = 150
-const GAME_TIME = 60
+const GAME_TIME = 30
 
 const RANDOM_POTATOES = [
   Potato1, Potato2, Potato3
@@ -256,7 +256,47 @@ function App() {
               textAlign: 'center',
             }}
           >
-            <h1>Whack-A-Potato</h1>
+            <div>
+              <span
+                style={{
+                  display: 'block',
+                  fontWeight: 'bold',
+                }}
+              >ZNN Productions</span>
+
+              <div
+                style={{
+                  position: 'relative',
+                }}
+              >
+                <div 
+                  style={{
+                    position: 'absolute',
+                    borderTop: '1px solid white',
+                    top: 12,
+                    left: 0,
+                    width: '100%',
+                    zIndex: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    background: '#1D110D',
+                    zIndex: 5,
+                    padding: '0rem 0.5rem'
+                  }}
+                >PRESENTS</span>
+              </div>
+
+              <h1
+                style={{
+                  marginTop: 0
+                }}
+              >Whack-A-Potato</h1>
+            </div>
+
             <div
               className='overlay-content'
               style={{
