@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
-import GlittyGif from './assets/glitty.gif'
+import { Actor, Position, Potato } from './types'
+import { CombatText } from './components/CombatText'
+
 import FuckYourselfSfx from './assets/sfx/Fuck Yourself.wav'
 import AhDuSheisseSfx from './assets/sfx/Ah Du Scheiße Man.wav'
 import AreYouCrazySfx from './assets/sfx/Are You Crazy 01.wav'
@@ -16,47 +18,102 @@ import YahManSfx from './assets/sfx/Yah Man 03.wav'
 import YouBitchesSfx from './assets/sfx/You Bitches.wav'
 import HUHSfx from './assets/sfx/HUH.mp3'
 import RantSfx from './assets/sfx/RANT.wav'
-import FarmBG from './assets/farm.webp'
-import Potato1 from './assets/potato1.gif'
-import Potato2 from './assets/potato2.gif'
-import Potato3 from './assets/mrpotatohead.gif'
-import { Position, Potato } from './types'
-import { CombatText } from './components/CombatText'
+import AFKSfx from './assets/sfx/HE IS AFK.mp3'
 
-const GLITTY_POINTS = 10
-const POTATO_PENALTY = 20
+import FarmBG from './assets/farm.webp'
+
+import GlittySprite from './assets/glitty.gif'
+import Potato1Sprite from './assets/potato1.gif'
+import Potato2Sprite from './assets/potato2.gif'
+import Potato3Sprite from './assets/mrpotatohead.gif'
+import RatSprite from './assets/rat.gif'
+
 const POTATO_TIMER = 2000
-const POTATO_WIDTH = 250
-const POTATO_HEIGHT = 150
 const GAME_TIME = 30
 
-const RANDOM_POTATOES = [
-  Potato1, Potato2, Potato3
+const ACTORS: Actor[] = [
+  {
+    name: 'glitty',
+    sprite: GlittySprite,
+    width: 250,
+    height: 150,
+    spawnRate: 0.4,
+    score: 10,
+    sfx: [
+      FuckYourselfSfx,
+      AreYouCrazySfx,
+      AhDuSheisseSfx,
+      BruhSfx,
+      MonstercockSfx,
+      OhGodSfx,
+      SheisseSfx,
+      ScreamSfx,
+      ThatWasFuckedUpSfx,
+      KrazySfx,
+      WTFSfx,
+      YahManSfx,
+      YouBitchesSfx
+    ]
+  },
+  {
+    name: 'rat',
+    sprite: RatSprite,
+    width: 100,
+    height: 150,
+    spawnRate: 0.05,
+    score: 50,
+    sfx: [AFKSfx],
+  },  
+  {
+    name: 'potato1',
+    sprite: Potato1Sprite,
+    width: 250,
+    height: 150,
+    spawnRate: 0.2,
+    score: -20,
+    sfx: [HUHSfx]
+  },
+  {
+    name: 'potato2',
+    sprite: Potato2Sprite,
+    width: 250,
+    height: 150,
+    spawnRate: 0.2,
+    score: -20,
+    sfx: [HUHSfx]
+  },
+  {
+    name: 'potatohead',
+    sprite: Potato3Sprite,
+    width: 250,
+    height: 150,
+    spawnRate: 0.15,
+    score: -20,
+    sfx: [HUHSfx]
+  },  
 ]
 
-const HitSFX = [
-  FuckYourselfSfx,
-  AreYouCrazySfx,
-  AhDuSheisseSfx,
-  BruhSfx,
-  MonstercockSfx,
-  OhGodSfx,
-  SheisseSfx,
-  ScreamSfx,
-  ThatWasFuckedUpSfx,
-  KrazySfx,
-  WTFSfx,
-  YahManSfx,
-  YouBitchesSfx
-]
+function getRandomActor(): Actor {
+  const random = Math.random()
+
+  let cumulative = 0
+
+  for (const actor of ACTORS) {
+    cumulative += actor.spawnRate
+    if (random < cumulative) return actor
+  }
+
+  /// Fallback (should never happen if spawnRate sums to 1)
+  return ACTORS[ACTORS.length - 1]
+}
 
 function pointOverlap(position: Position, potato: Potato) {
   /// Adding an extra 50 to dimensions for padding
   return (
-    position.x < potato.position.x + POTATO_WIDTH + 50 &&  /// Right edge is past the left edge of the potato
-    position.x + POTATO_WIDTH + 50 > potato.position.x &&  /// Left edge is before the right edge of the potato
-    position.y < potato.position.y + POTATO_HEIGHT + 50 && /// Top edge is below the bottom edge of the potato
-    position.y + POTATO_HEIGHT + 50 > potato.position.y    /// Bottom edge is above the top edge of the potato
+    position.x < potato.position.x + potato.actorData.width + 50 &&  /// Right edge is past the left edge of the potato
+    position.x + potato.actorData.width + 50 > potato.position.x &&  /// Left edge is before the right edge of the potato
+    position.y < potato.position.y + potato.actorData.height + 50 && /// Top edge is below the bottom edge of the potato
+    position.y + potato.actorData.height + 50 > potato.position.y    /// Bottom edge is above the top edge of the potato
   )
 }
 
@@ -94,29 +151,27 @@ function App() {
       return potatoes.filter(potato => potato.id !== id)
     })
 
-    let audio: HTMLAudioElement | null = null
-    let pointChange = 0
+    let pointChange = potato.actorData.score
 
-    if (potato.isGlitty) {
-      const bonusPoints = Math.floor((1 - ((Date.now() - potato.created) / POTATO_TIMER)) * GLITTY_POINTS)
-      audio = new Audio(HitSFX[Math.floor(Math.random() * HitSFX.length)])
-      pointChange = GLITTY_POINTS + bonusPoints
-    }
-    else {
-      audio = new Audio(HUHSfx)
-      pointChange = -POTATO_PENALTY
+    /// If its a positive score actor, we add a potential double bonus based on click speed
+    if (potato.actorData.score > 0) {
+      pointChange += Math.floor(
+        (1 - ((Date.now() - potato.created) / POTATO_TIMER)) * potato.actorData.score
+      )
     }
 
     setPoints((points) => points + pointChange)
 
     const numberPosition = potato.position
-    numberPosition.x += POTATO_WIDTH / 2 - 16
-    numberPosition.y += POTATO_HEIGHT / 2 - 16
+    numberPosition.x += potato.actorData.width / 2 - 16
+    numberPosition.y += potato.actorData.height / 2 - 16
 
     setNumbers(prev => [...prev, { id: Date.now(), position: numberPosition, value: pointChange }])
 
-    if (audio) {
-      audio.play()
+    if (potato.actorData.sfx.length > 0) {
+      new Audio(
+        potato.actorData.sfx[Math.floor(Math.random() * potato.actorData.sfx.length)]
+      ).play()
     }
   }, [potatoes])
 
@@ -144,8 +199,6 @@ function App() {
       checkGameEnd()
 
       if ((frameRef.current || 0) >= nextSpawnRef.current) {
-        const randomSpawn = Math.random()
-
         const position: Position | null = (() => {
           let attempts = 0
 
@@ -180,21 +233,15 @@ function App() {
           return
         }
 
+        const actor = { ...getRandomActor() }
+        actor.sprite += `?t=${Date.now()}`
+
         const newPotato: Potato = { 
           id: Date.now(), 
-          sprite: '', 
+          actorData: actor,
           position: position,
-          isGlitty: false,
+          isGlitty: actor.name === 'glitty',
           created: Date.now()
-        }
-
-        if (randomSpawn < 0.5) {
-          newPotato.isGlitty = true
-          newPotato.sprite = `${GlittyGif}?t=${Date.now()}`
-        }
-        else {
-          const sprite = RANDOM_POTATOES[Math.floor(Math.random() * RANDOM_POTATOES.length)]
-          newPotato.sprite = `${sprite}?t=${Date.now()}`
         }
 
         setPotatoes((potatoes) => {
@@ -408,7 +455,7 @@ function App() {
                 zIndex: 2,
                 cursor: 'pointer',
               }}
-              src={`${potato.sprite}`} 
+              src={`${potato.actorData.sprite}`} 
               onClick={() => {
                 hitPotato(potato.id)
               }} 
