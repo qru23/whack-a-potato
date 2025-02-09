@@ -19,6 +19,7 @@ import YouBitchesSfx from './assets/sfx/You Bitches.wav'
 import HUHSfx from './assets/sfx/HUH.mp3'
 import RantSfx from './assets/sfx/RANT.wav'
 import AFKSfx from './assets/sfx/HE IS AFK.mp3'
+import RoachSfx from './assets/sfx/roach.mp3'
 
 import FarmBG from './assets/farm.webp'
 
@@ -62,7 +63,7 @@ const ACTORS: Actor[] = [
     height: 150,
     spawnRate: 0.05,
     score: 50,
-    sfx: [AFKSfx],
+    sfx: [AFKSfx, RoachSfx],
   },  
   {
     name: 'potato1',
