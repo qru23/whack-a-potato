@@ -29,6 +29,9 @@ import Potato2Sprite from './assets/potato2.gif'
 import Potato3Sprite from './assets/mrpotatohead.gif'
 import RatSprite from './assets/rat.gif'
 
+import MacePassive from './assets/mace-passive.png'
+import MaceActive from './assets/mace-active.png'
+
 const POTATO_TIMER = 2000
 const GAME_TIME = 30
 
@@ -118,6 +121,8 @@ function pointOverlap(position: Position, potato: Potato) {
   )
 }
 
+const gameEndRantSfx = new Audio(RantSfx)
+
 function App() {
   const [isInGame, setIsInGame] = useState(false)
   const [points, setPoints] = useState<number>(0)
@@ -125,22 +130,44 @@ function App() {
   const [potatoes, setPotatoes] = useState<Potato[]>([])
   const [numbers, setNumbers] = useState<{ id: number; position: Position; value: number }[]>([])
 
-  const gameEndRantSfxRef = useRef(new Audio(RantSfx))
+  // const gameEndRantSfxRef = useRef(new Audio(RantSfx))
   const potatoesRef = useRef(potatoes)
   const frameRef = useRef<number | null>(null)
   const nextSpawnRef = useRef<number>(0)
+
+  const [mouseDown, isMouseDown] = useState(false)
+
+  useEffect(() => {
+    const mouseDownEvent = () => {
+      isMouseDown(true)
+    }
+
+    const mouseUpEvent = () => {
+      isMouseDown(false)
+    }
+
+    window.addEventListener('mousedown', mouseDownEvent)
+    window.addEventListener('mouseup', mouseUpEvent)
+
+    return () => {
+      window.removeEventListener('mousedown', mouseDownEvent)
+      window.removeEventListener('mouseup', mouseUpEvent)
+    }
+  }, [])
 
   const startGame = useCallback(() => {
     setStartTime(Date.now())
     setPoints(0)
     setIsInGame(true)
-    gameEndRantSfxRef.current.pause()
+    gameEndRantSfx.pause()
   }, [])
 
   const checkGameEnd = useCallback(() => {
     if ((Date.now() - startTime) / 1000 >= GAME_TIME) {
       setIsInGame(false)
-      gameEndRantSfxRef.current.play()
+      
+      gameEndRantSfx.currentTime = 0
+      gameEndRantSfx.play()
     }
   }, [startTime])
 
@@ -272,6 +299,9 @@ function App() {
         position: 'relative',
         top: 0,
         left: 0,
+        cursor: mouseDown ? `url(${MaceActive}), auto` : `url(${MacePassive}), auto`,
+        backgroundImage: `url(${FarmBG})`,
+        backgroundSize: `100% 100%`,
       }}
     >
       {
@@ -289,6 +319,7 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 100,
+            cursor: 'default',
           }}
         >
           <div
@@ -353,7 +384,7 @@ function App() {
               }}
             >
               {
-                points > 0 &&
+                points !== 0 &&
                 <span
                   style={{
                     fontSize: 24,
@@ -364,9 +395,7 @@ function App() {
               }
             </div>
             <button
-              style={{
-                height: 32,
-              }}
+              className='wow-button'
               onClick={startGame}
             >Start</button>
           </div>
@@ -455,7 +484,6 @@ function App() {
                 bottom: potato.position.y,
                 left: potato.position.x,
                 zIndex: 2,
-                cursor: 'pointer',
               }}
               src={`${potato.actorData.sprite}`} 
               onClick={() => {
@@ -512,7 +540,7 @@ function App() {
         </span>
       </div>
 
-      <img
+      {/* <img
         style={{
           width: '100vw',
           height: '100vh',
@@ -522,7 +550,7 @@ function App() {
           zIndex: 0,
         }}
         src={FarmBG} 
-      />
+      /> */}
     </div>
   )
 }
