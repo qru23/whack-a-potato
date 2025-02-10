@@ -167,7 +167,13 @@ function App() {
     numberPosition.x += potato.actorData.width / 2 - 16
     numberPosition.y += potato.actorData.height / 2 - 16
 
-    setNumbers(prev => [...prev, { id: Date.now(), position: numberPosition, value: pointChange }])
+    const numberId = Date.now()
+    setNumbers(prev => [...prev, { id: numberId, position: numberPosition, value: pointChange }])
+
+    /// Remove number after the animation finished playing
+    setTimeout(() => {
+      setNumbers(prev => prev.filter(n => n.id !== id))
+    }, 800)
 
     if (potato.actorData.sfx.length > 0) {
       new Audio(
@@ -175,14 +181,6 @@ function App() {
       ).play()
     }
   }, [potatoes])
-
-  const despawnPotato = useCallback((id: number) => {
-    setTimeout(() => {
-      setPotatoes((potatoes) => {
-        return potatoes.filter(potato => potato.id !== id)
-      })
-    }, POTATO_TIMER);
-  }, [])
 
   /// Sync ref with state
   useEffect(() => {
@@ -199,7 +197,7 @@ function App() {
     const update = () => {
       checkGameEnd()
 
-      if ((frameRef.current || 0) >= nextSpawnRef.current) {
+      if (Date.now() >= nextSpawnRef.current) {
         const position: Position | null = (() => {
           let attempts = 0
 
@@ -249,8 +247,11 @@ function App() {
           return [...potatoes, newPotato]
         })
 
-        despawnPotato(newPotato.id)
-        nextSpawnRef.current = (frameRef.current || 0) + (Math.floor(Math.random() * 60) + 30)
+        setTimeout(() => {
+          setPotatoes(prev => prev.filter(p => p.id !== newPotato.id))
+        }, POTATO_TIMER);
+
+        nextSpawnRef.current = Date.now() + (Math.floor(Math.random() * 700) + 300)
       }
 
       frameRef.current = requestAnimationFrame(update)
